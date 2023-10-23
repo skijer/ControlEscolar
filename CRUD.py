@@ -13,10 +13,11 @@ cursor = db.cursor()
 def InsertUsuario(nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena):
     try:
         sql = "INSERT INTO usuarios (nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        val = (nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena)
+        val = (nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena,)
         cursor.execute(sql, val)
         db.commit()
-        messagebox.showinfo("Acción realizada con éxito","Usuario ingresado correctamente")
+        insert_id = cursor.lastrowid
+        messagebox.showinfo("Acción realizada con éxito","Usuario ingresado correctamente con ID: {insert_id}")
     except Exception as e:
         messagebox.showerror("Falló al intentar","Error al insertar usuario: {e}")
         db.rollback()
@@ -24,7 +25,7 @@ def InsertUsuario(nombre, apellido_paterno, apellido_materno, perfil, email, nom
 def InsertAlumno(codigo, estado, fecha_nacimiento, carrera):
     try:
         sql = "INSERT INTO alumnos (codigo, estado, fecha_nacimiento, carrera) VALUES (%s, %s, %s, %s)"
-        val = (codigo, estado, fecha_nacimiento, carrera)
+        val = (codigo, estado, fecha_nacimiento, carrera,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Alumno ingresado correctamente")
@@ -35,7 +36,7 @@ def InsertAlumno(codigo, estado, fecha_nacimiento, carrera):
 def InsertMaestro(codigo, grado_estudios):
     try:
         sql = "INSERT INTO maestros (codigo, grado_estudios) VALUES (%s, %s)"
-        val = (codigo, grado_estudios)
+        val = (codigo, grado_estudios,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Maestro ingresado correctamente")
@@ -46,7 +47,7 @@ def InsertMaestro(codigo, grado_estudios):
 def InsertMateria(nombre_asignatura, creditos, semestre, carrera):
     try:
         sql = "INSERT INTO materias (nombre_asignatura, creditos, semestre, carrera) VALUES (%s, %s, %s, %s)"
-        val = (nombre_asignatura, creditos, semestre, carrera)
+        val = (nombre_asignatura, creditos, semestre, carrera,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Materia ingresada correctamente")
@@ -57,7 +58,7 @@ def InsertMateria(nombre_asignatura, creditos, semestre, carrera):
 def InsertSalon(edificio, nombre_salon):
     try:
         sql = "INSERT INTO salon (edificio, nombre_salon) VALUES (%s, %s)"
-        val = (edificio, nombre_salon)
+        val = (edificio, nombre_salon,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Salón ingresado correctamente")
@@ -68,7 +69,7 @@ def InsertSalon(edificio, nombre_salon):
 def InsertGrupo(nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon):
     try:
         sql = "INSERT INTO grupos (nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-        val = (nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon)
+        val = (nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Grupo ingresado correctamente")
@@ -79,7 +80,7 @@ def InsertGrupo(nombre_grupo, semestre, horario, codigo_materia, codigo_maestro,
 def InsertCarrera(nombre_carrera, num_semestres):
     try:
         sql = "INSERT INTO carreras (nombre_carrera, num_semestres) VALUES (%s, %s)"
-        val = (nombre_carrera, num_semestres)
+        val = (nombre_carrera, num_semestres,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Carrera ingresada correctamente")
@@ -90,7 +91,7 @@ def InsertCarrera(nombre_carrera, num_semestres):
 def InsertUsuarioMateria(codigo_usuario, codigo_materia):
     try:
         sql = "INSERT INTO usuarios_materias (codigo_usuario, codigo_materia) VALUES (%s, %s)"
-        val = (codigo_usuario, codigo_materia)
+        val = (codigo_usuario, codigo_materia,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Asociación usuario-materia ingresada correctamente")
@@ -101,7 +102,7 @@ def InsertUsuarioMateria(codigo_usuario, codigo_materia):
 def InsertHorario(codigo, horario, turno):
     try:
         sql = "INSERT INTO horarios (codigo, horario, turno) VALUES (%s, %s, %s)"
-        val = (codigo, horario, turno)
+        val = (codigo, horario, turno,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Horario ingresado correctamente")
@@ -112,7 +113,7 @@ def InsertHorario(codigo, horario, turno):
 def InsertGrupoMaestros(codigo_maestro, codigo_grupo):
     try:
         sql = "INSERT INTO grupo_maestros (codigo_maestro, codigo_grupo) VALUES (%s, %s)"
-        val = (codigo_maestro, codigo_grupo)
+        val = (codigo_maestro, codigo_grupo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Asociación usuario-grupo ingresada correctamente")
@@ -123,7 +124,7 @@ def InsertGrupoMaestros(codigo_maestro, codigo_grupo):
 def InsertUsuarioHorario(codigo_usuario, horario):
     try:
         sql = "INSERT INTO usuario_horario (codigo_usuario, horario) VALUES (%s, %s)"
-        val = (codigo_usuario, horario)
+        val = (codigo_usuario, horario,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Acción realizada con éxito","Asociación usuario-horario ingresada correctamente")
@@ -132,7 +133,18 @@ def InsertUsuarioHorario(codigo_usuario, horario):
         db.rollback()
 
 
-
+def Login(nombre_usuario, contrasena):
+    try:
+        sql = "SELECT * FROM usuarios WHERE nombre_usuario = %s"
+        val = (nombre_usuario,)
+        cursor.execute(sql,val)
+        result = cursor.fetchone()
+        if (result[-1] == contrasena):
+            return result[4]
+        else:
+            messagebox.showerror("Error", f"Contraseña incorrecta")
+    except Exception as e:
+        messagebox.showerror("Error 404", f"Usuario no encontrado")
 
 def SelectUsuario(codigo):
     try:
@@ -259,7 +271,7 @@ def UpdateUsuario(codigo, nombre, apellido_paterno, apellido_materno, perfil, em
     try:
         codigo = int(codigo)
         sql = "UPDATE usuarios SET nombre=%s, apellido_paterno=%s, apellido_materno=%s, perfil=%s, email=%s, nombre_usuario=%s, contrasena=%s WHERE codigo = %s"
-        val = (nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena, codigo)
+        val = (nombre, apellido_paterno, apellido_materno, perfil, email, nombre_usuario, contrasena, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de usuario actualizado correctamente")
@@ -270,7 +282,7 @@ def UpdateAlumno(codigo, estado, fecha_nacimiento, carrera):
     try:
         codigo = int(codigo)
         sql = "UPDATE alumnos SET estado=%s, fecha_nacimiento=%s, carrera=%s WHERE codigo = %s"
-        val = (estado, fecha_nacimiento, carrera, codigo)
+        val = (estado, fecha_nacimiento, carrera, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de alumno actualizado correctamente")
@@ -281,7 +293,7 @@ def UpdateMateria(codigo, nombre_asignatura, creditos, semestre, carrera):
     try:
         codigo = int(codigo)
         sql = "UPDATE materias SET nombre_asignatura=%s, creditos=%s, semestre=%s, carrera=%s WHERE codigo = %s"
-        val = (nombre_asignatura, creditos, semestre, carrera, codigo)
+        val = (nombre_asignatura, creditos, semestre, carrera, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de materia actualizado correctamente")
@@ -292,7 +304,7 @@ def UpdateHorario(codigo, horario, turno):
     try:
         codigo = int(codigo)
         sql = "UPDATE horarios SET horario=%s, turno=%s WHERE codigo = %s"
-        val = (horario, turno, codigo)
+        val = (horario, turno, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de horario actualizado correctamente")
@@ -303,7 +315,7 @@ def UpdateCarrera(codigo, nombre_carrera, num_semestres):
     try:
         codigo = int(codigo)
         sql = "UPDATE carreras SET nombre_carrera=%s, num_semestres=%s WHERE codigo = %s"
-        val = (nombre_carrera, num_semestres, codigo)
+        val = (nombre_carrera, num_semestres, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de carrera actualizado correctamente")
@@ -314,7 +326,7 @@ def UpdateGrupo(codigo, nombre_grupo, semestre, horario, codigo_materia, codigo_
     try:
         codigo = int(codigo)
         sql = "UPDATE grupos SET nombre_grupo=%s, semestre=%s, horario=%s, codigo_materia=%s, codigo_maestro=%s, max_num_alumnos=%s, codigo_salon=%s WHERE codigo = %s"
-        val = (nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon, codigo)
+        val = (nombre_grupo, semestre, horario, codigo_materia, codigo_maestro, max_num_alumnos, codigo_salon, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de grupo actualizado correctamente")
@@ -325,7 +337,7 @@ def UpdateSalon(codigo, edificio, nombre_salon):
     try:
         codigo = int(codigo)
         sql = "UPDATE salon SET edificio=%s, nombre_salon=%s WHERE codigo = %s"
-        val = (edificio, nombre_salon, codigo)
+        val = (edificio, nombre_salon, codigo,)
         cursor.execute(sql, val)
         db.commit()
         messagebox.showinfo("Exito","Registro de salón actualizado correctamente")
