@@ -17,7 +17,7 @@ def InsertUsuario(nombre, apellido_paterno, apellido_materno, perfil, email, nom
         cursor.execute(sql, val)
         db.commit()
         insert_id = cursor.lastrowid
-        messagebox.showinfo("Acción realizada con éxito","Usuario ingresado correctamente con ID: {insert_id}")
+        messagebox.showinfo("Acción realizada con éxito","Usuario ingresado correctamente con ID:c" + insert_id)
     except Exception as e:
         messagebox.showerror("Falló al intentar","Error al insertar usuario: {e}")
         db.rollback()
@@ -145,6 +145,17 @@ def Login(nombre_usuario, contrasena):
             messagebox.showerror("Error", f"Contraseña incorrecta")
     except Exception as e:
         messagebox.showerror("Error 404", f"Usuario no encontrado")
+        
+def SelectLogin(nombre_usuario, contrasena):
+    try:
+        sql = "SELECT * FROM usuarios WHERE nombre_usuario = %s"
+        val = (nombre_usuario,)
+        cursor.execute(sql,val)
+        result = cursor.fetchone()
+        if (result[-1] == contrasena):
+            return result[0]
+    except Exception as e:
+        pass
 
 def SelectUsuario(codigo):
     try:
@@ -344,5 +355,22 @@ def UpdateSalon(codigo, edificio, nombre_salon):
     except Exception as e:
         messagebox.showerror("Error",f"Error al actualizar el registro de salón: {str(e)}")
 
-
-
+def ListarCarreras():
+    try:
+        sql = "SELECT nombre_carrera FROM carreras"
+        cursor.execute(sql)
+        result = cursor.fetchall()
+        return result
+    except Exception as e:
+        return None
+    
+def ListarMaterias(carrera):
+    try:
+        sql = "SELECT nombre_asignatura.* FROM materias WHERE carrera = %s"
+        val = (carrera,)
+        cursor.execute(sql, val)
+        result = cursor.fetchall()
+        return result
+    except Exception as e:
+        return None
+    

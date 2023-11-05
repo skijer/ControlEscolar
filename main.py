@@ -2,6 +2,7 @@ from tkinter import *
 import tkinter as tk
 from tkinter.ttk import Combobox
 from tkinter import messagebox
+import re
 import CRUD as api
 
 root = tk.Tk()
@@ -9,6 +10,7 @@ root.geometry('1250x600')
 root.title('Control Escolar')
 root.resizable(False,False)
 tier = 3
+usercode = 0
 frame_state = IntVar()
 options_fm = tk.Frame(root, bg = 'gray')
 
@@ -111,14 +113,16 @@ def login_page():
     password_entry.place(x=620, y=280)
 
     def EventLogin():
-        global tier
+        global tier, usercode
         tier=3
         aux = api.Login(username_var.get(),password_var.get())
         if(aux == "administrativo"):
             tier = 0
         if(aux == "alumno"):
+            usercode = api.SelectLogin(username_var.get(),password_var.get())
             tier = 2
         if(aux == "maestro"):
+            usercode = api.SelectLogin(username_var.get(),password_var.get())
             tier = 1
         users_btn.config(state=tk.NORMAL if tier==0 else tk.DISABLED)
         students_btn.config(state=tk.NORMAL if tier==0 or tier==2 else tk.DISABLED)
@@ -200,27 +204,49 @@ def users_page():
     profile_entry = Combobox(users_page_fm, values=profiles, state=tk.DISABLED if frame_state!=2 or frame_state!=1 else tk.NORMAL)
     profile_entry.place(x=670, y=150)
     
+            
+    def check_password_strength(password):
+        # Define regular expressions for each of the required elements
+        upper_regex = re.compile(r'[A-Z]')
+        lower_regex = re.compile(r'[a-z]')
+        symbol_regex = re.compile(r'[!@#$%^&*()]')
+        digit_regex = re.compile(r'\d')
+
+        # Check if the password contains at least one of each element
+        has_upper = bool(upper_regex.search(password))
+        has_lower = bool(lower_regex.search(password))
+        has_symbol = bool(symbol_regex.search(password))
+        has_digit = bool(digit_regex.search(password))
+        
+        return has_upper and has_lower and has_symbol and has_digit
+    
     #Validaciones
     def Validate():
-        validation=name_var.get()
         mes_val=None
+        if not check_password_strength(password_var.get()):
+            mes_val="\n"+"La contraseña debe contener una mayúscula, una minúscula, un número y un caracter especial"
+        #name, lastname contains a number
+        validation=name_var.get()
         if not validation.isalpha():
             mes_val="\n"+"El nombre solo debe contener letras"
         validation=last_var.get()
         if not validation.isalpha():
-            mes_val=str(mes_val)+"\n"+"El apellido solo debe contener letras"
+            mes_val=str(mes_val)+"\n"+"El apellido paterno solo debe contener letras"
         validation=last_name2_var.get()
-        if not validation.isdigit():
-            mes_val=str(mes_val)+"\n"+"El télefono solo debe contener números"
+        if not validation.isalpha():
+            mes_val=str(mes_val)+"\n"+"El apellido materno solo debe contener letras"
         validation=profile_entry.get()
         if not validation in profiles:
             mes_val=str(mes_val)+"\n"+"No se seleccionó el perfil del usuario"
+        email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@+[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+        if email_regex.match(email_var.get()) is not None:
+            mes_val=str(mes_val)+"\n"+"No se ingresó una dirección de correo electrónico"
         if mes_val:
             messagebox.showerror("Error al validar inputs",mes_val)
             return False
         else:
             return True
-        
+
     #Eventos
     def EventSearch(id):
         try:
@@ -312,28 +338,663 @@ def users_page():
     remove_btn = tk.Button(users_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
                             command=EventDelete)
     remove_btn.place(x=550, y=200)
-
     return
 
 def students_page():
+    #states
+    # 0 Search - 1 Create - 2 Edit - 3 Display
+    global frame_state, tier, usercode
+    frame_state = 0
+    students_page_fm = tk.Frame(main_fm)
+    students_page_fm.pack(fill=tk.BOTH, expand=True)
+
+    id_search_label = tk.Label(students_page_fm, text="Ingrese ID a Buscar:")
+    id_search_label.place(x=430, y=30)
+    id_search_var = tk.StringVar()
+    id_search_entry = tk.Entry(students_page_fm, textvariable=id_search_var, state=tk.DISABLED if tier!=0 else tk.NORMAL)
+    id_search_entry.place(x=580, y=30)
+    
+    #profile_options = tk.OptionMenu(students_page_fm)
+    id_var = tk.StringVar()
+    id_lbl = tk.Label(students_page_fm, text="Código: ")
+    id_lbl.place(x=230, y=60)
+    id_entry = tk.Entry(students_page_fm, textvariable=id_var, state="readonly")
+    id_entry.place(x= 370, y=60)
+
+    name_var = tk.StringVar()
+    name_lbl = tk.Label(students_page_fm, text="Nombre: ")
+    name_lbl.place(x=230, y=90)
+    name_entry = tk.Entry(students_page_fm, textvariable=name_var, state="readonly")
+    name_entry.place(x= 370, y=90)    
+
+    last_var = tk.StringVar()
+    last_name_lbl = tk.Label(students_page_fm, text="Apellido Paterno: ")
+    last_name_lbl.place(x=230, y=120)
+    last_name_entry = tk.Entry(students_page_fm, textvariable=last_var, state="readonly")
+    last_name_entry.place(x= 370, y=120)  
+
+    last_name2_var = tk.StringVar()
+    last_name2_lbl = tk.Label(students_page_fm, text="Apellido Materno: ")
+    last_name2_lbl.place(x=230, y=150)
+    last_name2_entry = tk.Entry(students_page_fm, textvariable=last_name2_var, state="readonly")
+    last_name2_entry.place(x= 370, y=150)   
+    
+    email_var = tk.StringVar()
+    email_lbl = tk.Label(students_page_fm, text="Email: ")
+    email_lbl.place(x=530, y=180)
+    email_entry = tk.Entry(students_page_fm, textvariable=email_var, state="readonly")
+    email_entry.place(x= 670, y=180) 
+
+    state_var = tk.StringVar()
+    state_lbl = tk.Label(students_page_fm, text="Estado: ")
+    state_lbl.place(x=530, y=60)
+    state_entry = tk.Entry(students_page_fm, textvariable=state_var, state="readonly")
+    state_entry.place(x= 670, y=60) 
+    
+    birth_var = tk.StringVar()
+    birth_lbl = tk.Label(students_page_fm, text="Fecha de Nacimiento: ")
+    birth_lbl.place(x=530, y=90)
+    birth_entry = tk.Entry(students_page_fm, textvariable=birth_var, state="readonly")
+    birth_entry.place(x=670, y=90)
+
+    careers = [api.ListarCarreras()]
+    career_lbl = tk.Label(students_page_fm, text="Carrera: ")
+    career_lbl.place(x=530, y=120)
+    career_entry = Combobox(students_page_fm, values=careers, state="disabled")
+    career_entry.place(x=670, y=120)
+
+    def carrera_event():
+        global subjects
+        subjects=[api.ListarMaterias(subject_entry.get())]
+        
+    subjects = []
+    subject_lbl = tk.Label(students_page_fm, text="Carrera: ")
+    subject_lbl.place(x=530, y=150)
+    subject_entry = Combobox(students_page_fm, values=subjects, state="disabled")
+    subject_entry.place(x=670, y=150)
+    subject_entry.bind("<<ComboboxSelected>>", carrera_event())
+
+    if(usercode!=0):
+        EventSearch(usercode)
+    
+    #Validaciones
+    def Validate():
+        mes_val=None
+        #name, lastname contains a number
+        validation=subject_entry.get()
+        if not validation in subjects:
+            mes_val=str(mes_val)+"\n"+"No se seleccionó una carrera"
+        if mes_val:
+            messagebox.showerror("Error al validar inputs",mes_val)
+            return False
+        else:
+            return True
+
+    #Eventos
+    def EventSearch(id):
+        try:
+            obj = api.SelectUsuario(id)
+            id_var.set(obj[0])
+            name_var.set(obj[1])
+            last_var.set(obj[2])
+            last_name2_var.set(obj[3])
+            email_var.set(obj[5])
+            try:
+                obj = api.SelectAlumno(id)
+                state_var.set(obj[1])
+                career_entry.set(obj[2])
+                birth_var.set(obj[3])
+            except:
+                pass
+            StateChange(3)
+        except:
+            pass
+        
+    def EventSave():
+        validate=Validate()
+        if validate:
+            if(frame_state==1):
+                api.InsertAlumno()
+            if(frame_state==2):
+                api.UpdateAlumno()
+
+    def EventClean():
+        StateChange(0)
+        id_var.set("")
+        state_var.set("")
+        birth_var.set("")
+        subject_entry.set("")
+        career_entry.set("")
+        name_var.set("")
+        last_var.set("")
+        last_name2_var.set("")
+        email_var.set("")
+
+
+    def EventDelete():
+        messagebox.showwarning("Failed","Yet to be implemented")
+        
+    def StateChange(number):
+        global frame_state
+        frame_state=number
+        search_btn.config(state=tk.DISABLED if frame_state!=0 and tier!=0 else tk.NORMAL)
+        new_btn.config(state=tk.DISABLED if (frame_state==2 or frame_state==1) and tier!=0 else tk.NORMAL)
+        save_btn.config(state=tk.DISABLED if (frame_state==0 or frame_state==3) and tier!=0 else tk.NORMAL)
+        cancel_btn.config(state=tk.DISABLED if frame_state==0 and tier!=0 else tk.NORMAL)
+        edit_btn.config(state=tk.DISABLED if frame_state!=3 and tier!=0 else tk.NORMAL)
+        remove_btn.config(state=tk.DISABLED if frame_state!=3 and tier!=0 else tk.NORMAL)
+        
+        state_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        career_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        subject_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        
+        #Botones
+    search_btn = tk.Button(students_page_fm, text="Buscar", state=tk.DISABLED if frame_state!=0 else tk.NORMAL,
+                            command= lambda: EventSearch(id_search_var.get()))
+    search_btn.place(x=850, y=30)
+    new_btn = tk.Button(students_page_fm, text="Nuevo", state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL,
+                        command=lambda : StateChange(1))
+    new_btn.place(x=350, y=200)
+    save_btn = tk.Button(students_page_fm, text="Salvar", state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL,
+                         command=EventSave)
+    save_btn.place(x=400, y=200)
+    cancel_btn = tk.Button(students_page_fm, text="Cancelar", state=tk.DISABLED if frame_state==0 else tk.NORMAL,
+                           command=EventClean)
+    cancel_btn.place(x=445, y=200)
+    edit_btn = tk.Button(students_page_fm, text="Editar", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                         command=lambda: StateChange(2))
+    edit_btn.place(x=505, y=200)
+    remove_btn = tk.Button(students_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                            command=EventDelete)
+    remove_btn.place(x=550, y=200)
     return
 
 def teachers_page():
     return
 
 def subject_page():
+    #states
+    # 0 Search - 1 Create - 2 Edit - 3 Display
+    global frame_state, tier
+    frame_state = 0
+    subjects_page_fm = tk.Frame(main_fm)
+    subjects_page_fm.pack(fill=tk.BOTH, expand=True)
+
+    id_search_label = tk.Label(subjects_page_fm, text="Ingrese ID a Buscar:")
+    id_search_label.place(x=430, y=30)
+    id_search_var = tk.StringVar()
+    id_search_entry = tk.Entry(subjects_page_fm, textvariable=id_search_var, state=tk.DISABLED if tier!=0 else tk.NORMAL)
+    id_search_entry.place(x=580, y=30)
+    
+    id_var = tk.StringVar()
+    id_lbl = tk.Label(subjects_page_fm, text="Código: ")
+    id_lbl.place(x=230, y=60)
+    id_entry = tk.Entry(subjects_page_fm, textvariable=id_var, state="readonly")
+    id_entry.place(x= 370, y=60)
+
+    name_var = tk.StringVar()
+    name_lbl = tk.Label(subjects_page_fm, text="Materia: ")
+    name_lbl.place(x=230, y=90)
+    name_entry = tk.Entry(subjects_page_fm, textvariable=name_var, state="readonly")
+    name_entry.place(x= 370, y=90)    
+
+    credits_var = tk.StringVar()
+    credits_lbl = tk.Label(subjects_page_fm, text="Créditos: ")
+    credits_lbl.place(x=230, y=120)
+    credits_entry = tk.Entry(subjects_page_fm, textvariable=credits_var, state="readonly")
+    credits_entry.place(x= 370, y=120)  
+
+    semester_var = tk.StringVar()
+    semester_lbl = tk.Label(subjects_page_fm, text="Semestre: ")
+    semester_lbl.place(x=230, y=150)
+    semester_entry = tk.Entry(subjects_page_fm, textvariable=semester_var, state="readonly")
+    semester_entry.place(x= 370, y=150)   
+
+    careers = [api.ListarCarreras()]
+    career_lbl = tk.Label(subjects_page_fm, text="Carrera: ")
+    career_lbl.place(x=230, y=120)
+    career_entry = Combobox(subjects_page_fm, values=careers, state="disabled")
+    career_entry.place(x=370, y=120)
+    
+    #Validaciones
+    def Validate():
+        mes_val=None
+        #name, lastname contains a number
+        validation=career_entry.get()
+        if not validation in careers:
+            mes_val=str(mes_val)+"\n"+"No se seleccionó una carrera"
+        validation=semester_var.get()
+        if not validation.isdigit():
+            mes_val=str(mes_val)+"\n"+"Ingrese un número en semestre"
+        validation=credits_var.get()
+        if not validation.isdigit():
+            mes_val=str(mes_val)+"\n"+"Ingrese un número en créditos"
+        if mes_val:
+            messagebox.showerror("Error al validar inputs",mes_val)
+            return False
+        else:
+            return True
+
+    #Eventos
+    def EventSearch(id):
+        try:
+            obj = api.SelectMateria(id)
+            id_var.set(obj[0])
+            name_var.set(obj[1])
+            credits_var.set(obj[2])
+            semester_var.set(obj[3])
+            career_entry.set(obj[5])
+            StateChange(3)
+        except:
+            pass
+        
+    def EventSave():
+        validate=Validate()
+        if validate:
+            if(frame_state==1):
+                api.InsertMateria(
+                    name_var.get(),
+                    credits_var.get(),
+                    semester_var.get(),
+                    career_entry.get())
+            if(frame_state==2):
+                api.UpdateMateria(
+                    id_var.get(),
+                    name_var.get(),
+                    credits_var.get(),
+                    semester_var.get(),
+                    career_entry.get())
+
+    def EventClean():
+        StateChange(0)
+        id_var.set("")
+        credits_var.set("")
+        semester_var.set("")
+        career_entry.set("")
+        name_var.set("")
+
+
+    def EventDelete():
+        messagebox.showwarning("Failed","Yet to be implemented")
+        
+    def StateChange(number):
+        global frame_state
+        frame_state=number
+        search_btn.config(state=tk.DISABLED if frame_state!=0  else tk.NORMAL)
+        new_btn.config(state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL)
+        save_btn.config(state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL)
+        cancel_btn.config(state=tk.DISABLED if frame_state==0  else tk.NORMAL)
+        edit_btn.config(state=tk.DISABLED if frame_state!=3  else tk.NORMAL)
+        remove_btn.config(state=tk.DISABLED if frame_state!=3 else tk.NORMAL)
+        
+        credits_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        career_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        semester_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        name_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        
+        #Botones
+    search_btn = tk.Button(subjects_page_fm, text="Buscar", state=tk.DISABLED if frame_state!=0 else tk.NORMAL,
+                            command= lambda: EventSearch(id_search_var.get()))
+    search_btn.place(x=850, y=30)
+    new_btn = tk.Button(subjects_page_fm, text="Nuevo", state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL,
+                        command=lambda : StateChange(1))
+    new_btn.place(x=350, y=200)
+    save_btn = tk.Button(subjects_page_fm, text="Salvar", state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL,
+                         command=EventSave)
+    save_btn.place(x=400, y=200)
+    cancel_btn = tk.Button(subjects_page_fm, text="Cancelar", state=tk.DISABLED if frame_state==0 else tk.NORMAL,
+                           command=EventClean)
+    cancel_btn.place(x=445, y=200)
+    edit_btn = tk.Button(subjects_page_fm, text="Editar", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                         command=lambda: StateChange(2))
+    edit_btn.place(x=505, y=200)
+    remove_btn = tk.Button(subjects_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                            command=EventDelete)
+    remove_btn.place(x=550, y=200)
     return
 
 def groups_page():
     return
 
 def schedule_page():
+    #states
+    # 0 Search - 1 Create - 2 Edit - 3 Display
+    global frame_state, tier
+    frame_state = 0
+    classroom_page_fm = tk.Frame(main_fm)
+    classroom_page_fm.pack(fill=tk.BOTH, expand=True)
+
+    id_search_label = tk.Label(classroom_page_fm, text="Ingrese ID a Buscar:")
+    id_search_label.place(x=430, y=30)
+    id_search_var = tk.StringVar()
+    id_search_entry = tk.Entry(classroom_page_fm, textvariable=id_search_var)
+    id_search_entry.place(x=580, y=30)
+    
+    id_var = tk.StringVar()
+    id_lbl = tk.Label(classroom_page_fm, text="Código: ")
+    id_lbl.place(x=230, y=60)
+    id_entry = tk.Entry(classroom_page_fm, textvariable=id_var, state="readonly")
+    id_entry.place(x= 370, y=60)
+
+    name_var = tk.StringVar()
+    name_lbl = tk.Label(classroom_page_fm, text="Hora: ")
+    name_lbl.place(x=230, y=90)
+    name_entry = tk.Entry(classroom_page_fm, textvariable=name_var, state="readonly")
+    name_entry.place(x= 370, y=90)    
+
+    turns = ['mañana', 'tarde','noche']
+    turn_lbl = tk.Label(classroom_page_fm, text="Turno: ")
+    turn_lbl.place(x=530, y=120)
+    turn_entry = Combobox(classroom_page_fm, values=turns, state=tk.DISABLED if frame_state!=2 or frame_state!=1 else tk.NORMAL)
+    turn_entry.place(x=670, y=120)
+    
+    #Validaciones
+    def Validate():
+        mes_val=None
+        validation = turn_entry.get()
+        if not validation in turns:
+            mes_val=str(mes_val)+"\n"+"No se seleccionó el turno del horario"
+        validation = re.compile(r'^[0-9:]+-+[0-9:]$')
+        if validation.match(name_var.get()) is not None:
+            mes_val=str(mes_val)+"\n"+"Escribe la hora en formato HH:MM-HH:MM"
+        if mes_val:
+            messagebox.showerror("Error al validar inputs",mes_val)
+            return False
+        else:
+            return True
+        
+
+    #Eventos
+    def EventSearch(id):
+        try:
+            obj = api.SelectHorario(id)
+            id_var.set(obj[0])
+            name_var.set(obj[1])
+            turn_entry.set(obj[2])
+            StateChange(3)
+        except:
+            pass
+        
+    def EventSave():
+        validate=Validate()
+        if validate:
+            if(frame_state==1):
+                api.InsertHorario(
+                    name_var.get(),
+                    turn_entry.get())
+            if(frame_state==2):
+                api.UpdateHorario(
+                    id_var.get(),
+                    name_var.get(),
+                    turn_entry.get())
+
+    def EventClean():
+        StateChange(0)
+        id_var.set("")
+        turn_entry.set("")
+        name_var.set("")
+
+
+    def EventDelete():
+        messagebox.showwarning("Failed","Yet to be implemented")
+        
+    def StateChange(number):
+        global frame_state
+        frame_state=number
+        search_btn.config(state=tk.DISABLED if frame_state!=0  else tk.NORMAL)
+        new_btn.config(state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL)
+        save_btn.config(state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL)
+        cancel_btn.config(state=tk.DISABLED if frame_state==0  else tk.NORMAL)
+        edit_btn.config(state=tk.DISABLED if frame_state!=3  else tk.NORMAL)
+        remove_btn.config(state=tk.DISABLED if frame_state!=3 else tk.NORMAL)
+        
+        turn_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        name_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        
+        #Botones
+    search_btn = tk.Button(classroom_page_fm, text="Buscar", state=tk.DISABLED if frame_state!=0 else tk.NORMAL,
+                            command= lambda: EventSearch(id_search_var.get()))
+    search_btn.place(x=850, y=30)
+    new_btn = tk.Button(classroom_page_fm, text="Nuevo", state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL,
+                        command=lambda : StateChange(1))
+    new_btn.place(x=350, y=200)
+    save_btn = tk.Button(classroom_page_fm, text="Salvar", state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL,
+                         command=EventSave)
+    save_btn.place(x=400, y=200)
+    cancel_btn = tk.Button(classroom_page_fm, text="Cancelar", state=tk.DISABLED if frame_state==0 else tk.NORMAL,
+                           command=EventClean)
+    cancel_btn.place(x=445, y=200)
+    edit_btn = tk.Button(classroom_page_fm, text="Editar", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                         command=lambda: StateChange(2))
+    edit_btn.place(x=505, y=200)
+    remove_btn = tk.Button(classroom_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                            command=EventDelete)
+    remove_btn.place(x=550, y=200)
     return
 
 def classroom_page():
+    #states
+    # 0 Search - 1 Create - 2 Edit - 3 Display
+    global frame_state, tier
+    frame_state = 0
+    classroom_page_fm = tk.Frame(main_fm)
+    classroom_page_fm.pack(fill=tk.BOTH, expand=True)
+
+    id_search_label = tk.Label(classroom_page_fm, text="Ingrese ID a Buscar:")
+    id_search_label.place(x=430, y=30)
+    id_search_var = tk.StringVar()
+    id_search_entry = tk.Entry(classroom_page_fm, textvariable=id_search_var)
+    id_search_entry.place(x=580, y=30)
+    
+    id_var = tk.StringVar()
+    id_lbl = tk.Label(classroom_page_fm, text="Código: ")
+    id_lbl.place(x=230, y=60)
+    id_entry = tk.Entry(classroom_page_fm, textvariable=id_var, state="readonly")
+    id_entry.place(x= 370, y=60)
+
+    name_var = tk.StringVar()
+    name_lbl = tk.Label(classroom_page_fm, text="Aula: ")
+    name_lbl.place(x=230, y=90)
+    name_entry = tk.Entry(classroom_page_fm, textvariable=name_var, state="readonly")
+    name_entry.place(x= 370, y=90)    
+
+    building_var = tk.StringVar()
+    building_lbl = tk.Label(classroom_page_fm, text="Edificio: ")
+    building_lbl.place(x=230, y=120)
+    building_entry = tk.Entry(classroom_page_fm, textvariable=building_var, state="readonly")
+    building_entry.place(x= 370, y=120)   
+    
+    #Validaciones
+    def Validate():
+        mes_val=None
+        if mes_val:
+            messagebox.showerror("Error al validar inputs",mes_val)
+            return False
+        else:
+            return True
+
+    #Eventos
+    def EventSearch(id):
+        try:
+            obj = api.SelectSalon(id)
+            id_var.set(obj[0])
+            name_var.set(obj[1])
+            building_var.set(obj[2])
+            StateChange(3)
+        except:
+            pass
+        
+    def EventSave():
+        validate=Validate()
+        if validate:
+            if(frame_state==1):
+                api.InsertSalon(
+                    building_var.get(),
+                    name_var.get())
+            if(frame_state==2):
+                api.UpdateSalon(
+                    id_var.get(),
+                    building_var.get(),
+                    name_var.get())
+
+    def EventClean():
+        StateChange(0)
+        id_var.set("")
+        building_var.set("")
+        name_var.set("")
+
+
+    def EventDelete():
+        messagebox.showwarning("Failed","Yet to be implemented")
+        
+    def StateChange(number):
+        global frame_state
+        frame_state=number
+        search_btn.config(state=tk.DISABLED if frame_state!=0  else tk.NORMAL)
+        new_btn.config(state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL)
+        save_btn.config(state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL)
+        cancel_btn.config(state=tk.DISABLED if frame_state==0  else tk.NORMAL)
+        edit_btn.config(state=tk.DISABLED if frame_state!=3  else tk.NORMAL)
+        remove_btn.config(state=tk.DISABLED if frame_state!=3 else tk.NORMAL)
+        
+        building_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        name_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        
+        #Botones
+    search_btn = tk.Button(classroom_page_fm, text="Buscar", state=tk.DISABLED if frame_state!=0 else tk.NORMAL,
+                            command= lambda: EventSearch(id_search_var.get()))
+    search_btn.place(x=850, y=30)
+    new_btn = tk.Button(classroom_page_fm, text="Nuevo", state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL,
+                        command=lambda : StateChange(1))
+    new_btn.place(x=350, y=200)
+    save_btn = tk.Button(classroom_page_fm, text="Salvar", state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL,
+                         command=EventSave)
+    save_btn.place(x=400, y=200)
+    cancel_btn = tk.Button(classroom_page_fm, text="Cancelar", state=tk.DISABLED if frame_state==0 else tk.NORMAL,
+                           command=EventClean)
+    cancel_btn.place(x=445, y=200)
+    edit_btn = tk.Button(classroom_page_fm, text="Editar", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                         command=lambda: StateChange(2))
+    edit_btn.place(x=505, y=200)
+    remove_btn = tk.Button(classroom_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                            command=EventDelete)
+    remove_btn.place(x=550, y=200)
     return
 
 def degree_page():
+    #states
+    # 0 Search - 1 Create - 2 Edit - 3 Display
+    global frame_state, tier
+    frame_state = 0
+    degrees_page_fm = tk.Frame(main_fm)
+    degrees_page_fm.pack(fill=tk.BOTH, expand=True)
+
+    id_search_label = tk.Label(degrees_page_fm, text="Ingrese ID a Buscar:")
+    id_search_label.place(x=430, y=30)
+    id_search_var = tk.StringVar()
+    id_search_entry = tk.Entry(degrees_page_fm, textvariable=id_search_var)
+    id_search_entry.place(x=580, y=30)
+    
+    id_var = tk.StringVar()
+    id_lbl = tk.Label(degrees_page_fm, text="Código: ")
+    id_lbl.place(x=230, y=60)
+    id_entry = tk.Entry(degrees_page_fm, textvariable=id_var, state="readonly")
+    id_entry.place(x= 370, y=60)
+
+    name_var = tk.StringVar()
+    name_lbl = tk.Label(degrees_page_fm, text="Materia: ")
+    name_lbl.place(x=230, y=90)
+    name_entry = tk.Entry(degrees_page_fm, textvariable=name_var, state="readonly")
+    name_entry.place(x= 370, y=90)    
+
+    semester_var = tk.StringVar()
+    semester_lbl = tk.Label(degrees_page_fm, text="Número de semestres: ")
+    semester_lbl.place(x=230, y=120)
+    semester_entry = tk.Entry(degrees_page_fm, textvariable=semester_var, state="readonly")
+    semester_entry.place(x= 370, y=120)   
+    
+    #Validaciones
+    def Validate():
+        mes_val=None
+        #name, lastname contains a number
+        validation=name_entry.get()
+        if not validation.isalpha():
+            mes_val=str(mes_val)+"\n"+"La carrera debe contener solo letras"
+        validation=semester_var.get()
+        if not validation.isdigit():
+            mes_val=str(mes_val)+"\n"+"Ingrese un número en semestres"
+        if mes_val:
+            messagebox.showerror("Error al validar inputs",mes_val)
+            return False
+        else:
+            return True
+
+    #Eventos
+    def EventSearch(id):
+        try:
+            obj = api.SelectCarrera(id)
+            id_var.set(obj[0])
+            name_var.set(obj[1])
+            semester_var.set(obj[2])
+            StateChange(3)
+        except:
+            pass
+        
+    def EventSave():
+        validate=Validate()
+        if validate:
+            if(frame_state==1):
+                api.InsertCarrera(
+                    name_var.get(),
+                    semester_var.get())
+            if(frame_state==2):
+                api.UpdateCarrera(
+                    id_var.get(),
+                    name_var.get(),
+                    semester_var.get())
+
+    def EventClean():
+        StateChange(0)
+        id_var.set("")
+        semester_var.set("")
+        name_var.set("")
+
+
+    def EventDelete():
+        messagebox.showwarning("Failed","Yet to be implemented")
+        
+    def StateChange(number):
+        global frame_state
+        frame_state=number
+        search_btn.config(state=tk.DISABLED if frame_state!=0  else tk.NORMAL)
+        new_btn.config(state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL)
+        save_btn.config(state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL)
+        cancel_btn.config(state=tk.DISABLED if frame_state==0  else tk.NORMAL)
+        edit_btn.config(state=tk.DISABLED if frame_state!=3  else tk.NORMAL)
+        remove_btn.config(state=tk.DISABLED if frame_state!=3 else tk.NORMAL)
+        
+        semester_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        name_entry.config(state=tk.DISABLED if frame_state != 2 and frame_state != 1 else tk.NORMAL)
+        
+        #Botones
+    search_btn = tk.Button(degrees_page_fm, text="Buscar", state=tk.DISABLED if frame_state!=0 else tk.NORMAL,
+                            command= lambda: EventSearch(id_search_var.get()))
+    search_btn.place(x=850, y=30)
+    new_btn = tk.Button(degrees_page_fm, text="Nuevo", state=tk.DISABLED if frame_state==2 or frame_state==1 else tk.NORMAL,
+                        command=lambda : StateChange(1))
+    new_btn.place(x=350, y=200)
+    save_btn = tk.Button(degrees_page_fm, text="Salvar", state=tk.DISABLED if frame_state==0 or frame_state==3 else tk.NORMAL,
+                         command=EventSave)
+    save_btn.place(x=400, y=200)
+    cancel_btn = tk.Button(degrees_page_fm, text="Cancelar", state=tk.DISABLED if frame_state==0 else tk.NORMAL,
+                           command=EventClean)
+    cancel_btn.place(x=445, y=200)
+    edit_btn = tk.Button(degrees_page_fm, text="Editar", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                         command=lambda: StateChange(2))
+    edit_btn.place(x=505, y=200)
+    remove_btn = tk.Button(degrees_page_fm, text="Remover", state=tk.DISABLED if frame_state!=3 else tk.NORMAL,
+                            command=EventDelete)
+    remove_btn.place(x=550, y=200)
     return
 
 def planner_page():
