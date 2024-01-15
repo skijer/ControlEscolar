@@ -98,7 +98,7 @@ cursor.execute("""
     CREATE TABLE horarios (
         codigo INT AUTO_INCREMENT PRIMARY KEY,
         horario VARCHAR(255),
-        turno ENUM('mañana', 'tarde', 'noche')
+        turno ENUM('lunes', 'martes', 'miercoles', 'jueves', 'viernes')
     )
 """)
 
